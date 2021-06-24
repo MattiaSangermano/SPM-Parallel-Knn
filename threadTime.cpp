@@ -2,7 +2,13 @@
 #include<thread>
 #include<vector>
 #include <chrono>
+
 int main(int argc,char* argv[]){
+    if (argc != 3){
+        std::cout << "Wrong input format!" << std::endl;
+        std::cout << "Usage: " << argv[0] << " numExecution numWorker" << std::endl;
+        exit(-1);
+    }
     int n = std::atoi(argv[1]);
     int nw = std::atoi(argv[2]);
     std::vector<std::thread*> vec(nw);

@@ -30,26 +30,26 @@ void writeFile(std::map<int, std::vector<pi> >& knn,std::string filename){
     outFile.close();
 }
 
-void printVector(std::vector<std::pair<double,double>> vec){
-    for(int i = 0; i < vec.size(); i++){
-            // std::cout << std::setprecision(10)<< "x: " < < vec[i].first << " y: " << vec[i].second << std::endl;
-        }
-}
-
 int main(int argc, char **argv) {
-    if(argc <= 1){
-        std::cout << "Wrong input format. filename" << std::endl;
-        std::exit(0);
+    if(argc != 4){
+        std::cout << "Wrong input format!" << std::endl;
+        std::cout << "Usage: " << argv[0] << " K inputFile outputFile" << std::endl;
+        exit(-1);
     }
-    std::ifstream inputFile;
-    double distance;
     int k = std::atoi(argv[1]);
     std::string inFilename = argv[2];
     std::string outFilename = argv[3];
+    std::ifstream inputFile;
+    double distance;
+
+
     auto t_start = std::chrono::high_resolution_clock::now();
+
     std::vector<std::pair<double,double>> points;
-    readFile(points,inFilename);
     std::map<int, std::vector<pi> > knn;
+
+    readFile(points,inFilename);
+
     for(int i = 0; i < points.size(); i++){
         std::vector<pi> neighbour(k,std::make_pair(DBL_MAX,0));
         double max = DBL_MAX;
@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     }
 
     writeFile(knn,outFilename);
+
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
     std::cout << elapsed_time_ms << std::endl;

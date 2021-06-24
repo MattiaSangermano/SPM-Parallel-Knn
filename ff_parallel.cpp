@@ -6,6 +6,7 @@
 #include <chrono>
 #include <float.h>
 #include "utils.h"
+#include <string.h>
 
 using namespace ff;
 
@@ -19,7 +20,32 @@ struct my_task {
     int k;
     std::vector<std::pair<double,double>>* points;
 };
-
+static int get_thread_id(int nw, int i){
+    int th_id = -1;
+    if (nw + 1 >= 64){
+            int mod = 1;
+            int decr = 0;
+            if (nw + 1 <= 128){
+                mod = 2;
+            }else if (nw + 1 <= 192){
+                mod = 3;
+            }else if(nw + 1 <= 256){
+                mod = 4;
+            }
+            int row_lim = (nw + 1) % 64;
+            int col_lim = mod - 2;
+            int i_lim = (row_lim * mod) + col_lim + 1;
+            if (i >= i_lim){
+                i = i - i_lim;
+                th_id = (i % (mod - 1)) * 64 + (int)(i / (mod - 1)) + row_lim + 1;
+            }else{
+                th_id = (i % mod) * 64 + (int)(i / mod);
+            }
+        }else{
+            th_id = i;
+        }
+    return th_id;
+}
 static KnnType computeKnn(my_task* t){
     KnnType knn;
     for(int i = t->start; i < t->end; i++){
@@ -47,15 +73,20 @@ static KnnType computeKnn(my_task* t){
 }
 struct master: ff_monode_t<KnnType,my_task> {
     master(const int number_of_workers, const std::string inFilename,
-           std::string outFilename, const int k):
-    number_of_workers(number_of_workers),inFilename(inFilename),outFilename(outFilename),k(k){
-        //all_primes = new std::vector<unsigned long long>();
-        //results = new std::vector<unsigned long long>();
+           std::string outFilename, const int k,const bool pinning):
+    number_of_workers(number_of_workers),inFilename(inFilename),outFilename(outFilename),k(k),pinning(pinning){
+        th_id = get_thread_id(number_of_workers - 1, number_of_workers - 1);
     }
-    ~master() {
-        //delete all_primes;
-        //delete results;
+
+    int svc_init(){
+        if (pinning) {
+            if (ff_mapThreadToCpu(th_id)<0)
+                error("mapping Emitter");
+            printf("I'm the Emitter running on the core %d ---- > %ld\n",th_id, ff_getMyCore());
+        }
+    return 0;
     }
+
     my_task* svc(KnnType *single_knn) {
         if (single_knn == nullptr) {
 
@@ -105,43 +136,69 @@ struct master: ff_monode_t<KnnType,my_task> {
     const int number_of_workers;
     int task_received = 0 ;
     const int k;
+    const bool pinning;
+    int th_id;
 };
 
 struct worker: ff_node_t<my_task,KnnType> {
-KnnType* svc(my_task * task) {
-    KnnType* knn = new KnnType();
-    KnnType res = computeKnn(task);
-    *knn = res;
-    delete task;
-    return knn;
+    worker(const int i, const int nw, const bool pinning):
+    pinning(pinning){
+        th_id = get_thread_id(nw,i);
     }
+
+    int svc_init(){
+        if (pinning){
+            if (ff_mapThreadToCpu(th_id)<0)
+                error("mapping Emitter");
+        }
+        printf("I'm Worker%ld running on the core %d ----- > %ld\n", get_my_id(), th_id, ff_getMyCore());
+        return 0;
+    }
+    KnnType* svc(my_task * task) {
+        KnnType* knn = new KnnType();
+        KnnType res = computeKnn(task);
+        *knn = res;
+        delete task;
+        return knn;
+    }
+
+    int th_id;
+    const bool pinning;
 };
 
 int main(int argc, char *argv[]){
-    if (argc<5) {
-        std::cerr << "use: " << argv[0]  << " k nw inFilename outFilename";
+    if (argc<5 || argc > 6) {
+        std::cerr << "use: " << argv[0]  << " k nw inFilename outFilename [y|n]";
         return -1;
     }
     int k = std::atoi(argv[1]);
     int number_of_workers = std::atoi(argv[2]);
     std::string inFilename= argv[3];
     std::string outFilename= argv[4];
+    
+    bool pinning = false;
+    if(argc == 6){
+        pinning = std::strncmp(argv[5],"y",1) == 0;
+    }
 
-
-    master emitter(number_of_workers,inFilename,outFilename,k);
+    master emitter(number_of_workers,inFilename,outFilename,k,pinning);
     std::vector<std::unique_ptr<ff_node> > W;
-    for(int i=0;i<number_of_workers-1;++i) W.push_back(make_unique<worker>());
+    for(int i=0;i<number_of_workers-1;++i) W.push_back(make_unique<worker>(i,number_of_workers - 1, pinning));
 
     ff_Farm<float> farm(std::move(W),emitter);
+    farm.remove_collector();
+    if(pinning && number_of_workers > 64){
+        farm.no_mapping();
+    }
     farm.wrap_around();
 
-    ffTime(START_TIME);
+    auto t_start = std::chrono::high_resolution_clock::now();
     if (farm.run_and_wait_end()<0) {
         error("running farm");
         return -1;
     }
-    ffTime(STOP_TIME);
-    std::cout << ffTime(GET_TIME) << "\n";
+    auto t_end = std::chrono::high_resolution_clock::now();
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    std::cout << elapsed_time_ms << std::endl;
     return 0;
-
 }

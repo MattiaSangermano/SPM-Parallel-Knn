@@ -1,11 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <random>
-
+#include<iomanip>
 
 int main(int argc, char **argv) {
-    if(argc <= 1){
-        std::cout << "Wrong input format: noPoints minVal maxVal seed fileName" << std::endl;
+    if(argc < 5 || argc > 6){
+        std::cout << "Wrong input format!" << std::endl;
+        std::cout << "Usage: " << argv[0] << " noPoints minVal maxVal seed [fileName]" << std::endl;
+        exit(-1);
     }
     int noPoints = std::atoi(argv[1]);
     int minVal = std::atoi(argv[2]);

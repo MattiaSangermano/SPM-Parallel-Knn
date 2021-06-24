@@ -18,6 +18,7 @@
 typedef std::pair<double, int>  pi;
 typedef std::map<int, std::vector<pi>> KnnType;
 typedef std::vector<std::pair<double,double>> pointsType;
+
 struct task {
     int unsigned start;
     int unsigned end;
@@ -51,7 +52,7 @@ KnnType computeKNN(task t){
                         neighbour[index_max] = newPoint;
                         std::pair<int,double> max_point = findMax(neighbour);
                         max = max_point.second;
-                            index_max = max_point.first;
+                        index_max = max_point.first;
                     }
                 }
             }
@@ -61,32 +62,31 @@ KnnType computeKNN(task t){
     }
     return knn;
 }
-void printVector(std::vector<std::pair<double,double>> vec){
-    for(int i = 0; i < vec.size(); i++){
-            std::cout << std::setprecision(10)<< "x: " << vec[i].first << " y: " << vec[i].second << std::endl;
-        }
-}
 
 int main(int argc, char **argv) {
-    if(argc <= 1){
-        std::cout << "Wrong input format. filename" << std::endl;
-        std::exit(0);
+    if(argc != 5){
+        std::cout << "Wrong input format!" << std::endl;
+        std::cout << "Usage: " << argv[0] << " K nw inputFile outputFile" << std::endl;
+        exit(-1);
     }
-    std::ofstream outputFile;
-    double distance;
+
     int k = std::atoi(argv[1]);
     int nw = std::atoi(argv[2]);
     std::string filename = argv[3];
     std::string outFilename = argv[4];
+    
+    std::ofstream outputFile;
+    double distance;
+
     auto t_start = std::chrono::high_resolution_clock::now();
     std::vector<std::pair<double,double>> points;
-    
+    std::vector<std::future<KnnType>> futures;
+
     readFile(points,filename);
     
     int taskLength = (int) (points.size() / nw);
     int remainingPoints = (points.size() % nw);
 
-    std::vector<std::future<KnnType>> futures;
     int start = 0;
     int end = remainingPoints > 0 ? taskLength + 1 : taskLength;
     remainingPoints --;
@@ -109,16 +109,17 @@ int main(int argc, char **argv) {
     t.start = start;
     t.end = end;
     t.points = &points;
-    KnnType out;
-    out = computeKNN(t);
+    KnnType my_knns;
+    
+    my_knns = computeKNN(t);
 
-    std::vector<KnnType> all_out;
+    std::vector<KnnType> workers_knns;
     for (int j = 0; j < nw - 1; j++) {
-        all_out.push_back(futures.at(j).get());
+        workers_knns.push_back(futures.at(j).get());
     }
-    all_out.push_back(out);
+    workers_knns.push_back(my_knns);
 
-    writeFile(all_out,outFilename);
+    writeFile(workers_knns,outFilename);
     
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();

@@ -1,8 +1,10 @@
 *
 !*.*
 .DS_Store
-.vscode/
-*.json
 *.txt
+.vscode/
+.history/
 *.dSYM/
 !Makefile
+!plot/
+!experiments/
