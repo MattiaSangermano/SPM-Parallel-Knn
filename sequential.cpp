@@ -36,6 +36,9 @@ int main(int argc, char **argv) {
         std::cout << "Usage: " << argv[0] << " K inputFile outputFile" << std::endl;
         exit(-1);
     }
+    
+    //reading input values
+
     int k = std::atoi(argv[1]);
     std::string inFilename = argv[2];
     std::string outFilename = argv[3];
@@ -50,26 +53,27 @@ int main(int argc, char **argv) {
 
     readFile(points,inFilename);
 
+    // KNN computetion
     for(int i = 0; i < points.size(); i++){
-        std::vector<pi> neighbour(k,std::make_pair(DBL_MAX,0));
+        std::vector<pi> neighbours(k,std::make_pair(DBL_MAX,0));
         double max = DBL_MAX;
         int index_max = 0;
         for(int j = 0; j < points.size(); j++){
             if(i != j){
                 distance = computeDistance(points[i],points[j]);
                 pi newPoint = std::make_pair(distance,j);
-                if(neighbour.size() >= k){
+                if(neighbours.size() >= k){
                     if(distance < max){
-                        neighbour[index_max] = newPoint;
-                        std::pair<int,double> max_point = findMax(neighbour);
+                        neighbours[index_max] = newPoint;
+                        std::pair<int,double> max_point = findMax(neighbours);
                         max = max_point.second;
                         index_max = max_point.first;
                     }
                 }
             }
         }
-        std::sort(neighbour.begin(),neighbour.end());
-        knn[i] = neighbour;
+        std::sort(neighbours.begin(),neighbours.end());
+        knn[i] = neighbours;
     }
 
     writeFile(knn,outFilename);

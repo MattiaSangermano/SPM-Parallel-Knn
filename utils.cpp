@@ -6,6 +6,7 @@
 #include <sstream>
 #include <tuple>
 #include <cmath>
+#include <algorithm>
 
 void readFile(pointsType& points,std::string filename){
     std::ifstream inputFile;
@@ -24,6 +25,23 @@ void readFile(pointsType& points,std::string filename){
     inputFile.close();
 }
 
+void writeFile(std::vector<KnnType*>& knns,std::string filename){
+
+    std::ofstream outFile;
+    outFile.open(filename);
+    for (int i = 0; i < knns.size(); i++){
+        for (auto const& x : *knns[i]){
+            outFile << x.first << ": ";
+            auto neighbours = x.second;
+            for(int j = 0; j < neighbours.size(); j++){
+                outFile << neighbours[j].second << " ";
+            }
+            outFile << std::endl;
+        }
+    }
+    outFile.close();
+}
+
 void writeFile(std::vector<KnnType>& knns,std::string filename){
 
     std::ofstream outFile;
@@ -39,6 +57,32 @@ void writeFile(std::vector<KnnType>& knns,std::string filename){
         }
     }
     outFile.close();
+}
+
+KnnType* computeKNN(Task* t){
+    KnnType* knn = new KnnType();
+    for(int i = t->start; i < t->end; i++){
+        std::vector<pi> neighbour(t->k,std::make_pair(DBL_MAX,0));
+        double max = DBL_MAX;
+        int index_max = 0;
+        for(int j = 0; j < t->points->size(); j++){
+            if(i != j){
+                double distance = computeDistance(t->points->at(i),t->points->at(j));
+                pi newPoint = std::make_pair(distance,j);
+                if(neighbour.size() >= t->k){
+                    if(distance < max){
+                        neighbour[index_max] = newPoint;
+                        std::pair<int,double> max_point = findMax(neighbour);
+                        max = max_point.second;
+                        index_max = max_point.first;
+                    }
+                }
+            }
+        }
+        std::sort(neighbour.begin(),neighbour.end());
+        (*knn)[i] = neighbour;
+    }
+    return knn;
 }
 
 std::pair<int,double> findMax(std::vector< pi >& vec){

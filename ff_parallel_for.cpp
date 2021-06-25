@@ -14,13 +14,6 @@ typedef std::pair<double, int>  pi;
 typedef std::map<int, std::vector<pi>> KnnType;
 typedef std::vector<std::pair<double,double>> pointsType;
 
-struct my_task {
-    int start;
-    int end;
-    int k;
-    std::vector<std::pair<double,double>>* points;
-};
-
 static std::vector<pi> computeKnn(const int i, const int k, pointsType& points){
     std::vector<pi> neighbour(k,std::make_pair(DBL_MAX,0));
     double max = DBL_MAX;

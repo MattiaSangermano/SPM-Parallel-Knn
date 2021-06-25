@@ -4,7 +4,7 @@ CXX		= g++ -std=c++17
 LDFLAGS 	= -pthread
 OPTFLAGS	= -O3
 
-TARGETS		= parallel
+TARGETS		= sequential parallel ff_parallel ff_parallel_for fileCreation threadTime
 INC = ~/fastflow/
 .PHONY: all clean
 .SUFFIXES: .cpp 

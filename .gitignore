@@ -7,4 +7,3 @@
 *.dSYM/
 !Makefile
 !plot/
-!experiments/

@@ -5,7 +5,6 @@
 #include <sstream>
 #include <vector>
 #include <tuple>
-#include <queue>
 #include <math.h> 
 #include <map>
 #include <algorithm>
@@ -15,16 +14,10 @@
 #include <iomanip>
 #include <float.h>
 #include "utils.h"
+
 typedef std::pair<double, int>  pi;
 typedef std::map<int, std::vector<pi>> KnnType;
 typedef std::vector<std::pair<double,double>> pointsType;
-
-struct task {
-    int unsigned start;
-    int unsigned end;
-    int unsigned k;
-    std::vector<std::pair<double,double>>* points;
-};
 
 void printKnn(KnnType& knn){
     for (auto const& x : knn){
@@ -35,32 +28,6 @@ void printKnn(KnnType& knn){
         }
         std::cout << std::endl;
     }
-}
-
-KnnType computeKNN(task t){
-    KnnType knn;
-    for(int i = t.start; i < t.end; i++){
-        std::vector<pi> neighbour(t.k,std::make_pair(DBL_MAX,0));
-        double max = DBL_MAX;
-        int index_max = 0;
-        for(int j = 0; j < t.points->size(); j++){
-            if(i != j){
-                double distance = computeDistance(t.points->at(i),t.points->at(j));
-                pi newPoint = std::make_pair(distance,j);
-                if(neighbour.size() >= t.k){
-                    if(distance < max){
-                        neighbour[index_max] = newPoint;
-                        std::pair<int,double> max_point = findMax(neighbour);
-                        max = max_point.second;
-                        index_max = max_point.first;
-                    }
-                }
-            }
-        }
-        std::sort(neighbour.begin(),neighbour.end());
-        knn[i] = neighbour;
-    }
-    return knn;
 }
 
 int main(int argc, char **argv) {
@@ -80,7 +47,7 @@ int main(int argc, char **argv) {
 
     auto t_start = std::chrono::high_resolution_clock::now();
     std::vector<std::pair<double,double>> points;
-    std::vector<std::future<KnnType>> futures;
+    std::vector<std::future<KnnType*>> futures;
 
     readFile(points,filename);
     
@@ -92,11 +59,7 @@ int main(int argc, char **argv) {
     remainingPoints --;
 
     for(int i = 0; i < nw - 1; i++) {
-        task t;
-        t.k = k;
-        t.start = start;
-        t.end = end;
-        t.points = &points;
+        Task* t = new Task(start,end,k,&points);
         start = end;
         end = remainingPoints > 0 ? end + taskLength + 1 : end + taskLength;
         remainingPoints --;
@@ -104,16 +67,11 @@ int main(int argc, char **argv) {
                 std::async(std::launch::async, computeKNN, t)
         );
     }
-    task t;
-    t.k = k;
-    t.start = start;
-    t.end = end;
-    t.points = &points;
-    KnnType my_knns;
-    
+    Task* t = new Task(start,end,k,&points);
+    KnnType* my_knns;
     my_knns = computeKNN(t);
 
-    std::vector<KnnType> workers_knns;
+    std::vector<KnnType*> workers_knns;
     for (int j = 0; j < nw - 1; j++) {
         workers_knns.push_back(futures.at(j).get());
     }

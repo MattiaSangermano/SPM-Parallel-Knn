@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
         std::cout << "Usage: " << argv[0] << " noPoints minVal maxVal seed [fileName]" << std::endl;
         exit(-1);
     }
+    // reading input values
     int noPoints = std::atoi(argv[1]);
     int minVal = std::atoi(argv[2]);
     int maxVal = std::atoi(argv[3]);
@@ -17,8 +18,11 @@ int main(int argc, char **argv) {
     if(argc > 5){
         filename = argv[5];
     }
+
     std::ofstream outputFile;
     outputFile.open(filename);
+
+    //uniform number generation
     std::mt19937 gen(seed); 
     std::uniform_real_distribution<> dis(minVal, maxVal);
     long double x, y;

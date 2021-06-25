@@ -39,6 +39,8 @@ for index_s, s in enumerate(sizes):
     color = colours[s]
     ax.plot(list(files_dicts[index_s].keys()), speedups[index_s],
             label=s, color=color, linestyle='solid')
-    ax.title.set_text('scalability')
+    plt.xlabel('num workers')
+    plt.ylabel('scalability')
     plt.legend()
+    plt.tight_layout()
 plt.show()
