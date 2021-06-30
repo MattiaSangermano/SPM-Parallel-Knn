@@ -19,7 +19,7 @@ exOnputFilename = sys.argv[3]
 outFilename = sys.argv[4]
 n_ex = int(sys.argv[5])
 
-nws = [2, 4, 8, 16, 32, 64, 128, 256]
+nws = [2, 4, 8, 16, 32, 64, 96, 128, 192, 256]
 ks = [5, 50, 100]
 times = {}
 time = 0.0

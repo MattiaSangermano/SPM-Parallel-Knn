@@ -33,8 +33,8 @@ sizes = ['small', 'medium', 'large']
 
 for size in sizes:
     directory = 'experiments/'
-    # files_name = ['seq-', 'par-', 'ff-pin-', 'ff_for_']
-    files_name = ['seq-', 'ff-', 'ff-pin-']
+    files_name = ['seq-', 'par-', 'ff-pin-', 'ff_for_']
+    #files_name = ['seq-', 'ff-', 'ff-pin-']
     metric = sys.argv[1]
     read_dict = getDictFromFile(directory + 'read_time.json')
     write_dict = getDictFromFile(directory + 'write_time.json')
@@ -61,7 +61,7 @@ for size in sizes:
     colours = {
         'par-': 'red',
         'ff-': 'blue',
-        'ff-pin-': 'red',
+        'ff-pin-': 'blue',
         'ff_for_': 'green'
         }
     linestyles = {
@@ -70,12 +70,14 @@ for size in sizes:
         '100': 'dashdot'
     }
     label = {
-        'ff-pin-': 'personalizzato',
-        'ff-': 'lineare'
+        'ff-pin-': 'ff-pin',
+        'ff-': 'ff',
+        'par-': 'par',
+        'ff_for_': 'ff_for'
     }
 
     for index_k, k in enumerate(speedups[0].keys()):
-        ax = fig.add_subplot(1, 3, index_k + 1)
+        ax = fig.add_subplot(3, 1, index_k + 1)
         plt.grid(linestyle='dotted')
         for index, dict in enumerate(speedups):
             lbl = label[files_name[index+1]]
