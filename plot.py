@@ -94,7 +94,7 @@ for size in sizes:
             ax.plot(list(files_dicts[1].keys()), expected,
                     label='expected', color='black', linestyle='dashed')
         plt.xlabel('num workers')
-        plt.ylabel('efficiency')
+        plt.ylabel('speedup')
         plt.legend(loc='upper left')
         plt.tight_layout()
     plt.show()

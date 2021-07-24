@@ -1,9 +1,9 @@
 *
 !*.*
 .DS_Store
-*.txt
 .vscode/
 .history/
 *.dSYM/
 !Makefile
 !plot/
+!experiments/
